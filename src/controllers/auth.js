@@ -1,9 +1,28 @@
+import e from "cors";
 import * as authService from "../services/auth.js";
 
 export async function register(req, res) {
     try {
         const user = await authService.register(req.body);
         res.status(201).json(user);
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+}
+
+export async function verifyOTP(req, res) {
+    try {
+        const data = await authService.verificarEmail(req.body);
+        res.json(data);
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+}
+
+export async function reenviarOTP(req, res) {
+    try {
+        const data = await authService.reenviarOTP(req.body);
+        res.json(data);
     } catch (error) {
         res.status(400).json({ error: error.message });
     }
