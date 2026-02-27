@@ -1,7 +1,6 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { supabase } from "../config/supabase.js";
-import { enviarOTP } from "./email.js";
 
 export async function register({ nome, email, senha, tipo, telefone }) {
 
@@ -69,10 +68,11 @@ export async function register({ nome, email, senha, tipo, telefone }) {
         expira_em: expira
     }]);
 
-    await enviarOTP(user.email, user.nome, otp);
-
     return {
-        message: `Usuário criado. Um código foi enviado para ${user.email} .`
+        message: `Usuário criado. Um código foi enviado para ${user.email} .`,
+        email: user.email,
+        nome: user.nome,
+        otp
     };
 }
 
@@ -140,12 +140,11 @@ export async function reenviarOTP({ email }) {
         .maybeSingle();
 
     if (ultimoOtp) {
-        const agora = new Date();
-        const criado = new Date(ultimoOtp.criado_em);
-        const diff = (agora - criado) / 1000;
+        const diff = (Date.now() - new Date(ultimoOtp.criado_em).getTime()) / 1000;
 
         if (diff < 60) {
-            throw new Error("Aguarde 1 minuto para reenviar o código");
+            const restante = Math.ceil(60 - diff);
+            throw new Error(`Aguarde ${restante}s para reenviar o código`);
         }
     }
 
@@ -166,9 +165,12 @@ export async function reenviarOTP({ email }) {
         expira_em: expira
     }]);
 
-    await enviarOTP(user.email, user.nome, otp);
-
-    return { message: `Novo código enviado para ${user.email}` };
+    return {
+        message: "Novo código gerado",
+        email: user.email,
+        nome: user.nome,
+        otp
+    };
 }
 
 export async function login({ email, senha }) {
