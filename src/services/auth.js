@@ -80,12 +80,13 @@ export async function verificarEmail({ email, codigo }) {
 
     email = email.toLowerCase();
 
-    const { data: user } = await supabase
+    const { data: user, error } = await supabase
         .from("usuarios")
         .select("*")
         .eq("email", email)
-        .single();
+        .maybeSingle();
 
+    if (error) throw new Error(error.message);
     if (!user) throw new Error("Usuário não encontrado");
 
     const { data: otp } = await supabase
@@ -94,7 +95,7 @@ export async function verificarEmail({ email, codigo }) {
         .eq("usuario_id", user.id)
         .eq("codigo", codigo)
         .eq("usado", false)
-        .single();
+        .maybeSingle();
 
     if (!otp) throw new Error("Código inválido");
 
@@ -117,21 +118,24 @@ export async function verificarEmail({ email, codigo }) {
 
 export async function reenviarOTP({ email }) {
 
+    if (!email) throw new Error("Email é obrigatório");
+
     email = email.toLowerCase();
 
-    const { data: user } = await supabase
+    const { data: user, error } = await supabase
         .from("usuarios")
         .select("*")
         .eq("email", email)
-        .single();
+        .maybeSingle();
 
+    if (error) throw new Error(error.message);
     if (!user) throw new Error("Usuário não encontrado");
 
     if (user.email_verificado) {
         throw new Error("Email já verificado");
     }
 
-    const { data: ultimoOtp } = await supabase
+    const { data: ultimoOtp, error: otpError } = await supabase
         .from("email_otps")
         .select("*")
         .eq("usuario_id", user.id)
@@ -139,6 +143,7 @@ export async function reenviarOTP({ email }) {
         .limit(1)
         .maybeSingle();
 
+    if (otpError) throw new Error(otpError.message);
     if (ultimoOtp) {
         const diff = (Date.now() - new Date(ultimoOtp.criado_em).getTime()) / 1000;
 
@@ -159,11 +164,15 @@ export async function reenviarOTP({ email }) {
     const expira = new Date();
     expira.setMinutes(expira.getMinutes() + 5);
 
-    await supabase.from("email_otps").insert([{
-        usuario_id: user.id,
-        codigo: otp,
-        expira_em: expira
-    }]);
+    const { error: insertError } = await supabase
+        .from("email_otps")
+        .insert([{
+            usuario_id: user.id,
+            codigo: otp,
+            expira_em: expira
+        }]);
+
+    if (insertError) throw new Error(insertError.message);
 
     return {
         message: "Novo código gerado",
