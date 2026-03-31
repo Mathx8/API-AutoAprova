@@ -192,7 +192,17 @@ export async function login({ email, senha }) {
 
     const { data: user, error } = await supabase
         .from("usuarios")
-        .select("id, nome, email, senha, tipo, email_verificado")
+        .select(`
+            id,
+            nome,
+            email,
+            senha,
+            tipo,
+            email_verificado,
+
+            aluno:alunos ( id ),
+            professor:professores ( id )
+        `)
         .eq("email", email)
         .maybeSingle();
 
@@ -210,6 +220,16 @@ export async function login({ email, senha }) {
         throw new Error("Email ou senha inválidos");
     }
 
+    let tipo_id = null;
+
+    if (user.tipo === "aluno") {
+        tipo_id = user.aluno?.id || null;
+    }
+
+    if (user.tipo === "professor") {
+        tipo_id = user.professor?.id || null;
+    }
+
     const token = jwt.sign(
         { id: user.id, tipo: user.tipo },
         process.env.JWT_SECRET,
@@ -220,6 +240,7 @@ export async function login({ email, senha }) {
         token,
         user: {
             id: user.id,
+            tipo_id,
             email: user.email,
             nome: user.nome,
             tipo: user.tipo
