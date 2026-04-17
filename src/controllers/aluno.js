@@ -17,3 +17,12 @@ export async function getAulasAluno(req, res) {
         res.status(400).json({ error: error.message });
     }
 }
+
+export async function getProfessoresPorLocalizacao(req, res) {
+    try {
+        const data = await alunoService.GetProfessoresPorLocalizacao(req.params.estado);
+        res.json(data);
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+}

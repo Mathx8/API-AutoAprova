@@ -75,7 +75,34 @@ const router = Router();
  *         description: ID inválido
  */
 
+/**
+ * @swagger
+ * /alunos/professores/localizacao/{estado}:
+ *   get:
+ *     summary: Listar professores por localização
+ *     tags: [Alunos]
+ *     parameters:
+ *       - in: path
+ *         name: estado
+ *         required: true
+ *         schema:
+ *           type: string
+ *         example: SP
+ *     responses:
+ *       200:
+ *         description: Lista de professores por localização (pode ser vazia)
+ *         content:
+ *           application/json:
+ *             schema:
+*               type: array
+*               items:
+*                 $ref: '#/components/schemas/Professor'
+*       400:
+*         description: ID inválido
+ */
+
 router.put("/", alunoController.updateAluno);
 router.get("/:aluno_id/aulas", alunoController.getAulasAluno);
+router.get("/professores/localizacao/:estado", alunoController.getProfessoresPorLocalizacao);
 
 export default router;

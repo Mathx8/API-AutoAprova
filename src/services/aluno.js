@@ -36,12 +36,32 @@ export async function GetAulasAluno(aluno_id) {
                 descricao,
                 usuarios (
                     localizacao (
-                        cidade
+                        cidade,
+                        estado
                     )
                 )
             )
         `)
         .eq("aluno_id", aluno_id);
+
+    if (error) throw new Error(error.message);
+
+    return data;
+}
+
+export async function GetProfessoresPorLocalizacao(estado) {
+    const { data, error } = await supabase
+        .from("professores")
+        .select(`
+            *,
+            usuarios (
+                localizacao (
+                    cidade,
+                    estado
+                )
+            )
+        `)
+        .eq("localizacao.estado", estado);
 
     if (error) throw new Error(error.message);
 
