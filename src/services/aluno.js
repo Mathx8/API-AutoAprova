@@ -61,7 +61,7 @@ export async function GetProfessoresPorLocalizacao(estado) {
                 )
             )
         `)
-        .eq("localizacao.estado", estado);
+        .eq("usuarios.localizacao.estado", estado);
 
     if (error) throw new Error(error.message);
 
