@@ -35,6 +35,7 @@ export async function GetAulasAluno(aluno_id) {
                 id,
                 descricao,
                 usuarios (
+                nome,
                     localizacao (
                         cidade,
                         estado
@@ -55,10 +56,16 @@ export async function GetProfessoresPorLocalizacao(estado) {
         .select(`
             *,
             usuarios (
+                nome,
                 localizacao (
                     cidade,
                     estado
                 )
+            ),
+            cnh (
+                numero,
+                categoria,
+                data_validade
             )
         `)
         .eq("usuarios.localizacao.estado", estado);
