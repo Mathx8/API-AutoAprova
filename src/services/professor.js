@@ -26,7 +26,9 @@ export async function GetAulasProfessor(professor_id) {
             *,
             alunos (
                 id,
-                usuario_id
+                usuarios (
+                    nome
+                )
             )
         `)
         .eq("professor_id", professor_id);
