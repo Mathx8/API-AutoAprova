@@ -199,6 +199,7 @@ export async function login({ email, senha }) {
             senha,
             tipo,
             email_verificado,
+            localizacao ( cidade, estado ),
 
             aluno:alunos ( id ),
             professor:professores ( id )
@@ -243,7 +244,8 @@ export async function login({ email, senha }) {
             tipo_id,
             email: user.email,
             nome: user.nome,
-            tipo: user.tipo
+            tipo: user.tipo,
+            localizacao: user.localizacao || null
         }
     };
 }
