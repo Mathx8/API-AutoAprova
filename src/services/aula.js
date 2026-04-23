@@ -9,24 +9,6 @@ export async function CreateAula({ aluno_id, professor_id, data }) {
     const diaSemana = dataAula.getDay();
     const hora = dataAula.toTimeString().slice(0, 5);
 
-    const { data: disponibilidade } = await supabase
-        .from("disponibilidade_professor")
-        .select("*")
-        .eq("professor_id", professor_id)
-        .eq("dia_semana", diaSemana);
-
-    if (!disponibilidade || disponibilidade.length === 0) {
-        throw new Error("Professor não atende nesse dia");
-    }
-
-    const horarioValido = disponibilidade.find(d =>
-        hora >= d.hora_inicio && hora < d.hora_fim
-    );
-
-    if (!horarioValido) {
-        throw new Error("Horário fora da disponibilidade do professor");
-    }
-
     const { data: conflito } = await supabase
         .from("aulas")
         .select("*")

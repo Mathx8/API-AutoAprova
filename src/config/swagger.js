@@ -6,7 +6,7 @@ const options = {
         info: {
             title: "API AutoAprova",
             version: "1.0.0",
-            description: "API para gerenciamento de usuários(alunos e professores), carros, aulas e disponibilidade"
+            description: "API para gerenciamento de usuários(alunos e professores), carros e aulas"
         },
         servers: [
             {
@@ -19,8 +19,7 @@ const options = {
             { name: "Alunos" },
             { name: "Professores" },
             { name: "Aulas" },
-            { name: "Carros" },
-            { name: "Disponibilidade" }
+            { name: "Carros" }
         ],
         components: {
             securitySchemes: {

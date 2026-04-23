@@ -8,7 +8,6 @@ import auth from "./src/routes/auth.js";
 import aluno from "./src/routes/aluno.js";
 import aula from "./src/routes/aula.js";
 import carro from "./src/routes/carro.js";
-import disponibilidade from "./src/routes/disponibilidade.js";
 import professor from "./src/routes/professor.js";
 import usuario from "./src/routes/usuario.js";
 
@@ -24,7 +23,6 @@ app.use('/auth', auth);
 app.use('/alunos', aluno);
 app.use("/aulas", aula);
 app.use("/carros", carro);
-app.use("/disponibilidade", disponibilidade);
 app.use("/professores", professor);
 app.use("/usuarios", usuario);
 

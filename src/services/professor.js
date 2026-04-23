@@ -19,17 +19,6 @@ export async function UpdateProfessor({ usuario_id, descricao }) {
     return data;
 }
 
-export async function GetDisponibilidadeProfessor(professor_id) {
-    const { data, error } = await supabase
-        .from("disponibilidade_professor")
-        .select("*") //TODO: conferir se precisa de tudo depois
-        .eq("professor_id", professor_id);
-
-    if (error) throw new Error(error.message);
-
-    return data;
-}
-
 export async function GetAulasProfessor(professor_id) {
     const { data, error } = await supabase
         .from("aulas")

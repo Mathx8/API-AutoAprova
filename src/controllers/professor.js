@@ -9,15 +9,6 @@ export async function updateProfessor(req, res) {
     }
 }
 
-export async function getDisponibilidadeProfessor(req, res) {
-    try {
-        const data = await professorService.GetDisponibilidadeProfessor(req.params.professor_id);
-        res.json(data);
-    } catch (error) {
-        res.status(400).json({ error: error.message });
-    }
-}
-
 export async function getAulasProfessor(req, res) {
     try {
         const data = await professorService.GetAulasProfessor(req.params.professor_id);

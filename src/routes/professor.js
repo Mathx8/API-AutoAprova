@@ -43,43 +43,6 @@ const router = Router();
 
 /**
  * @swagger
- * /professores/{professor_id}/disponibilidade:
- *   get:
- *     summary: Ver disponibilidade do professor
- *     tags: [Professores]
- *     parameters:
- *       - in: path
- *         name: professor_id
- *         required: true
- *         schema:
- *           type: string
- *         example: d66b6630-06c5-4c45-9c46-089a81b1592e
- *     responses:
- *       200:
- *         description: Lista de disponibilidades do professor
- *         content:
- *           application/json:
- *             schema:
- *               type: array
- *               items:
- *                 type: object
- *                 properties:
- *                   id:
- *                     type: string
- *                   professor_id:
- *                     type: string
- *                   dia_semana:
- *                     type: string
- *                   hora_inicio:
- *                     type: string
- *                   hora_fim:
- *                     type: string
- *       400:
- *         description: ID inválido
- */
-
-/**
- * @swagger
  * /professores/{professor_id}/aulas:
  *   get:
  *     summary: Listar aulas do professor
@@ -163,7 +126,6 @@ const router = Router();
  */
 
 router.put("/", professorController.updateProfessor);
-router.get("/:professor_id/disponibilidade", professorController.getDisponibilidadeProfessor);
 router.get("/:professor_id/aulas", professorController.getAulasProfessor);
 router.post("/cnh", professorController.createCNH);
 
