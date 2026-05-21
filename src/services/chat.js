@@ -5,13 +5,14 @@ import { supabase } from "../config/supabase.js";
 /**
  * Retorna a conversa existente entre aluno e professor,
  * criando uma nova se ainda não existir.
+ * aluno_id  = alunos.id
+ * professor_id = professores.id
  */
 export async function GetOrCreateConversa({ aluno_id, professor_id }) {
     if (!aluno_id || !professor_id) {
         throw new Error("aluno_id e professor_id são obrigatórios");
     }
 
-    // Tenta buscar conversa existente
     const { data: existente, error: erroBusca } = await supabase
         .from("conversas")
         .select("*")
@@ -22,7 +23,6 @@ export async function GetOrCreateConversa({ aluno_id, professor_id }) {
     if (erroBusca) throw new Error(erroBusca.message);
     if (existente) return existente;
 
-    // Cria conversa nova
     const { data: nova, error: erroCria } = await supabase
         .from("conversas")
         .insert([{ aluno_id, professor_id }])
@@ -35,12 +35,14 @@ export async function GetOrCreateConversa({ aluno_id, professor_id }) {
 }
 
 /**
- * Lista todas as conversas de um usuário (aluno ou professor),
- * incluindo a última mensagem e dados do outro participante.
+ * Lista todas as conversas de um usuário.
+ *
+ * tipo_id  = alunos.id ou professores.id  (usado para filtrar as conversas)
+ * usuario_id = usuarios.id                (usado para calcular nao_lidas)
  */
-export async function GetConversasDoUsuario(usuario_id, tipo) {
-    if (!usuario_id || !tipo) {
-        throw new Error("usuario_id e tipo são obrigatórios");
+export async function GetConversasDoUsuario(tipo_id, tipo, usuario_id) {
+    if (!tipo_id || !tipo) {
+        throw new Error("tipo_id e tipo são obrigatórios");
     }
 
     let query;
@@ -66,7 +68,7 @@ export async function GetConversasDoUsuario(usuario_id, tipo) {
                     autor_id
                 )
             `)
-            .eq("aluno_id", usuario_id);
+            .eq("aluno_id", tipo_id);
     } else {
         query = supabase
             .from("conversas")
@@ -88,7 +90,7 @@ export async function GetConversasDoUsuario(usuario_id, tipo) {
                     autor_id
                 )
             `)
-            .eq("professor_id", usuario_id);
+            .eq("professor_id", tipo_id);
     }
 
     const { data, error } = await query.order("criado_em", {
@@ -98,11 +100,19 @@ export async function GetConversasDoUsuario(usuario_id, tipo) {
 
     if (error) throw new Error(error.message);
 
-    // Retorna com última mensagem e contagem de não lidas
     return (data || []).map(conversa => {
         const msgs = conversa.chat_mensagens || [];
-        const ultima = msgs[0] || null;
-        const naoLidas = msgs.filter(m => !m.lida && m.autor_id !== usuario_id).length;
+        // Ordena desc para pegar a última
+        const ordenadas = [...msgs].sort(
+            (a, b) => new Date(b.criado_em) - new Date(a.criado_em)
+        );
+        const ultima = ordenadas[0] || null;
+
+        // nao_lidas: mensagens não lidas enviadas pelo OUTRO (autor_id !== usuario_id)
+        // Se usuario_id não for fornecido, conta todas as não lidas
+        const naoLidas = msgs.filter(m =>
+            !m.lida && (usuario_id ? m.autor_id !== usuario_id : true)
+        ).length;
 
         return {
             ...conversa,
@@ -116,8 +126,8 @@ export async function GetConversasDoUsuario(usuario_id, tipo) {
 // ─── MENSAGENS DO CHAT ────────────────────────────────────────────────────────
 
 /**
- * Lista todas as mensagens de uma conversa em ordem cronológica.
- * Marca automaticamente como lidas as mensagens do outro participante.
+ * Lista mensagens de uma conversa e marca como lidas.
+ * usuario_id = usuarios.id de quem está lendo
  */
 export async function GetMensagensConversa(conversa_id, usuario_id) {
     if (!conversa_id) throw new Error("conversa_id é obrigatório");
@@ -137,9 +147,9 @@ export async function GetMensagensConversa(conversa_id, usuario_id) {
 
     if (error) throw new Error(error.message);
 
-    // Marca como lidas as mensagens do outro participante
-    if (usuario_id) {
-        const idsParaMarcar = (data || [])
+    // Marca como lidas mensagens do outro participante
+    if (usuario_id && data?.length) {
+        const idsParaMarcar = data
             .filter(m => !m.lida && m.autor_id !== usuario_id)
             .map(m => m.id);
 
@@ -155,7 +165,12 @@ export async function GetMensagensConversa(conversa_id, usuario_id) {
 }
 
 /**
- * Envia uma mensagem em uma conversa existente.
+ * Envia uma mensagem.
+ * autor_id = usuarios.id de quem envia
+ *
+ * A validação busca os usuarios.id do aluno e professor via join
+ * usando duas queries separadas para evitar ambiguidade do Supabase
+ * com joins aninhados retornando array vs objeto.
  */
 export async function EnviarMensagemChat({ conversa_id, autor_id, mensagem }) {
     if (!conversa_id || !autor_id || !mensagem?.trim()) {
@@ -166,21 +181,32 @@ export async function EnviarMensagemChat({ conversa_id, autor_id, mensagem }) {
         throw new Error("Mensagem muito longa (máximo 1000 caracteres)");
     }
 
-    // Verifica se o autor realmente participa da conversa
+    // Busca a conversa para obter aluno_id e professor_id
     const { data: conversa, error: erroConversa } = await supabase
         .from("conversas")
-        .select(`
-            aluno:aluno_id ( usuarios ( id ) ),
-            professor:professor_id ( usuarios ( id ) )
-        `)
+        .select("aluno_id, professor_id")
         .eq("id", conversa_id)
         .maybeSingle();
 
     if (erroConversa) throw new Error(erroConversa.message);
     if (!conversa) throw new Error("Conversa não encontrada");
 
-    const alunoUsuarioId = conversa.aluno?.usuarios?.id;
-    const professorUsuarioId = conversa.professor?.usuarios?.id;
+    // Resolve usuarios.id do aluno
+    const { data: alunoRow } = await supabase
+        .from("alunos")
+        .select("usuario_id")
+        .eq("id", conversa.aluno_id)
+        .maybeSingle();
+
+    // Resolve usuarios.id do professor
+    const { data: professorRow } = await supabase
+        .from("professores")
+        .select("usuario_id")
+        .eq("id", conversa.professor_id)
+        .maybeSingle();
+
+    const alunoUsuarioId = alunoRow?.usuario_id;
+    const professorUsuarioId = professorRow?.usuario_id;
 
     if (autor_id !== alunoUsuarioId && autor_id !== professorUsuarioId) {
         throw new Error("Você não participa desta conversa");
