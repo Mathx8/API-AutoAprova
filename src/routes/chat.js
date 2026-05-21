@@ -111,8 +111,8 @@ const router = Router();
  */
 
 router.post("/conversas", chatController.getOrCreateConversa);
-router.get("/conversas/:tipo_id/:tipo", chatController.getConversas);
 router.get("/conversas/:conversa_id/mensagens", chatController.getMensagens);
+router.get("/conversas/:tipo_id/:tipo", chatController.getConversas);
 router.post("/mensagens", chatController.enviarMensagem);
 
 export default router;
