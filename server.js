@@ -7,7 +7,9 @@ import { swaggerSpec } from "./src/config/swagger.js"
 import auth from "./src/routes/auth.js";
 import aluno from "./src/routes/aluno.js";
 import aula from "./src/routes/aula.js";
+import aulaExtra from "./src/routes/aulaExtra.js";
 import carro from "./src/routes/carro.js";
+import chat from "./src/routes/chat.js";
 import professor from "./src/routes/professor.js";
 import usuario from "./src/routes/usuario.js";
 
@@ -22,7 +24,9 @@ app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use('/auth', auth);
 app.use('/alunos', aluno);
 app.use("/aulas", aula);
+app.use("/aulas", aulaExtra);
 app.use("/carros", carro);
+app.use("/chat", chat);
 app.use("/professores", professor);
 app.use("/usuarios", usuario);
 
